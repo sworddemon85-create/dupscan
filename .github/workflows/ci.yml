@@ -25,4 +25,5 @@ jobs:
           echo "duplicate-content" > demo/nested/b.txt
           echo "unique" > demo/c.txt
           node cli.js demo --json > report.json
-          node -e "const r=require('./report.json'); if(r.groups.length!==1||r.wastedBytes!==17) process.exit(1); console.log('CLI_SMOKE_OK')"
+          # echo 会追加换行：两份 18 字节的重复文件，可释放 18 字节
+          node -e "const r=require('./report.json'); if(r.groups.length!==1||r.wastedBytes!==18) process.exit(1); console.log('CLI_SMOKE_OK')"
