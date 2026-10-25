@@ -1,80 +1,80 @@
 # 🔍 dupscan
 
+**English** | [中文](README.zh-CN.md)
+
 [![CI](https://github.com/sworddemon85-create/dupscan/actions/workflows/ci.yml/badge.svg)](https://github.com/sworddemon85-create/dupscan/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Zero deps](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
 
-**零依赖的重复文件扫描器**：按内容 SHA-256 判重，帮你找出下载文件夹/相册里占空间的重复文件。
+**A zero-dependency duplicate file finder.** Matches files by content (SHA-256), so renamed or moved copies are still detected — with a two-stage size-bucket optimization so most files never get hashed at all.
 
-> A zero-dependency duplicate file finder. Content-hash based (SHA-256), with two-stage size-bucket optimization so most files never get hashed.
+## ✨ Features
 
-## ✨ 特性
+- **Content-based matching** — file names don't matter; identical bytes are identical files
+- **Two-stage scan** — files are first bucketed by size (different sizes can't be duplicates); only same-size candidates get hashed, which is dramatically faster
+- **Streaming hashing** — 1MB chunks keep memory flat even on multi-GB files
+- **Zero dependencies** — Node.js built-ins only; clone and run
+- **JSON reports** — `--json` output plugs straight into your cleanup scripts
+- **Sensible defaults** — skips `node_modules`/`.git` and symlinks automatically
 
-- **内容判重，不看文件名** — 改过名、挪过位置的重复文件照样找出来
-- **两段式优化** — 先按文件大小分桶（大小不同必不重复），只对同大小的候选算哈希，快得多
-- **流式哈希** — 1MB 分块读取，几 GB 的大文件也不会撑爆内存
-- **零依赖** — 只用 Node 内置模块，克隆即用；自动忽略 `node_modules`/`.git`
-- **JSON 报告** — `--json` 输出结构化结果，方便接脚本做后续清理
-
-## 🚀 用法
+## 🚀 Usage
 
 ```bash
 git clone https://github.com/sworddemon85-create/dupscan.git
 cd dupscan
 
-# 扫描一个目录
+# scan a directory
 node cli.js D:\Download
 
-# 只看不小于 10MB 的文件，显示浪费空间最大的 5 组
+# only files >= 10MB, show the 5 most wasteful groups
 node cli.js D:\Download --min-size 10MB --top 5
 
-# 导出 JSON 报告
+# export a JSON report
 node cli.js D:\Download --json > dup-report.json
 
-# 作为库使用
+# use as a library
 node -e "require('./lib/scan').findDuplicates('D:\\\\Download').then(r => console.log(r.wastedBytes))"
 ```
 
-示例输出：
+Example output:
 
 ```
-扫描目录: D:\Download
-文件总数: 1284（其中 96 个计算了哈希）
-重复组数: 12
-可释放空间: 1.4 GB
+Scanned:  1284 files (96 hashed)
+Groups:   12 duplicate groups
+Reclaimable: 1.4 GB
 
-#1 52.3 MB × 3 = 可释放 104.6 MB
-    D:\Download\视频\final.mp4
-    D:\Download\视频\final (1).mp4
-    D:\Download\备份\final_copy.mp4
+#1 52.3 MB × 3 = reclaim 104.6 MB
+    D:\Download\video\final.mp4
+    D:\Download\video\final (1).mp4
+    D:\Download\backup\final_copy.mp4
 ```
 
-## 🧪 测试
+## 🧪 Tests
 
 ```bash
-npm test    # node --test，8 个用例
+npm test    # node --test — 8 unit tests
 ```
 
-覆盖：递归遍历与忽略规则、哈希正确性、内容分组、minSize 过滤、排序、缺失目录容错。
+Covers: recursive walk and ignore rules, hash correctness, content grouping, minSize filtering, sort order, missing-directory resilience.
 
-## 📁 结构
+## 📁 Structure
 
 ```
 dupscan/
 ├── lib/
-│   ├── walk.js    # 递归遍历（忽略 node_modules/.git，跳过符号链接）
-│   ├── hash.js    # 流式 SHA-256
-│   └── scan.js    # 两段式查重：大小分桶 → 哈希分组
-├── cli.js         # 命令行入口
-└── test/          # node:test 单元测试
+│   ├── walk.js    # recursive walk (ignores node_modules/.git, skips symlinks)
+│   ├── hash.js    # streaming SHA-256
+│   └── scan.js    # two-stage scan: size buckets → hash groups
+├── cli.js         # command-line entry
+└── test/          # node:test unit tests
 ```
 
-## ⚠️ 设计取舍
+## ⚠️ Design choices
 
-- **只报告，不删文件**：清理动作留给用户或你自己的脚本（配 `--json` 很好写）
-- 符号链接一律跳过，避免循环遍历
-- Windows 下建议在终端执行 `chcp 65001` 以正确显示中文输出
+- **Report-only** — it never deletes anything; cleanup is left to you or your scripts (pairs well with `--json`)
+- Symlinks are always skipped to avoid cyclic walks
+- On Windows, run `chcp 65001` first for correct non-ASCII output in legacy consoles
 
-## 📄 许可证
+## 📄 License
 
 [MIT](LICENSE)
