@@ -1,0 +1,10 @@
+{
+  "name": "dupscan",
+  "version": "0.1.0",
+  "description": "Zero-dependency duplicate file finder — content-hash (SHA-256) based, two-stage size-bucket optimization",
+  "private": true,
+  "license": "MIT",
+  "main": "lib/scan.js",
+  "bin": { "dupscan": "cli.js" },
+  "scripts": { "test": "node --test" }
+}
