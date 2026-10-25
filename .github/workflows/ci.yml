@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run unit tests
+        run: node --test
+
+      - name: CLI smoke test
+        run: |
+          mkdir -p demo/nested
+          echo "duplicate-content" > demo/a.txt
+          echo "duplicate-content" > demo/nested/b.txt
+          echo "unique" > demo/c.txt
+          node cli.js demo --json > report.json
+          node -e "const r=require('./report.json'); if(r.groups.length!==1||r.wastedBytes!==17) process.exit(1); console.log('CLI_SMOKE_OK')"
