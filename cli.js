@@ -16,7 +16,17 @@ function parseSize(text) {
   if (!m) throw new Error(`无法解析大小: ${text}（示例: 500 / 10KB / 1.5MB）`);
   const n = Number(m[1]);
   const unit = (m[2] || "b").toLowerCase();
-  return Math.max(1, Math.floor(n * { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }[unit]));
+  const bytes = Math.max(1, Math.floor(n * { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }[unit]));
+  if (!Number.isSafeInteger(bytes)) throw new Error(`大小超出安全整数范围: ${text}`);
+  return bytes;
+}
+
+function optionValue(args, index) {
+  const value = args[index + 1];
+  if (!value || value.startsWith("--") || value === "-h") {
+    throw new Error(`${args[index]} 缺少参数值`);
+  }
+  return value;
 }
 
 function formatBytes(bytes) {
@@ -33,17 +43,35 @@ function formatBytes(bytes) {
 
 async function main() {
   const args = process.argv.slice(2);
+  if (!args.length) return printHelp();
   const options = { _: [], minSize: 1, json: false, top: 0, ignore: [] };
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--min-size") options.minSize = parseSize(args[++i]);
-    else if (args[i] === "--json") options.json = true;
-    else if (args[i] === "--top") options.top = Number(args[++i]) || 0;
-    else if (args[i] === "--ignore") options.ignore.push(...String(args[++i]).split(","));
-    else if (args[i] === "--help" || args[i] === "-h") return printHelp();
+    if (args[i] === "--") {
+      options._.push(...args.slice(i + 1));
+      break;
+    }
+    if (args[i] === "--min-size") {
+      options.minSize = parseSize(optionValue(args, i));
+      i += 1;
+    } else if (args[i] === "--json") options.json = true;
+    else if (args[i] === "--top") {
+      const value = optionValue(args, i);
+      if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) {
+        throw new Error(`--top 必须是非负安全整数: ${value}`);
+      }
+      options.top = Number(value);
+      i += 1;
+    } else if (args[i] === "--ignore") {
+      options.ignore.push(...optionValue(args, i).split(","));
+      i += 1;
+    } else if (args[i] === "--help" || args[i] === "-h") return printHelp();
+    else if (args[i].startsWith("-")) throw new Error(`未知选项: ${args[i]}`);
     else options._.push(args[i]);
   }
+  if (options._.length !== 1 || !options._[0]) throw new Error("请指定一个扫描目录；使用 --help 查看用法");
   const root = options._[0];
-  if (!root) return printHelp();
+  const stat = await require("fs/promises").stat(root);
+  if (!stat.isDirectory()) throw new Error(`扫描路径不是目录: ${root}`);
 
   const { findDuplicates } = require("./lib/scan");
   const started = Date.now();
@@ -88,10 +116,11 @@ function printHelp() {
 
 选项:
   --min-size <大小>   只统计不小于该大小的文件，如 500 / 10KB / 1.5MB（默认 1B）
-  --top <N>           只显示浪费空间最大的前 N 组
+  --top <N>           只显示浪费空间最大的前 N 组（非负整数，0 表示全部）
   --ignore <目录,...>  额外忽略的目录名（默认已忽略 node_modules/.git 等）
   --json              以 JSON 输出（可重定向保存报告）
-  -h, --help          显示帮助`);
+  -h, --help          显示帮助
+  --                 结束选项解析，后面可接以 - 开头的目录名`);
 }
 
 main().catch((err) => {

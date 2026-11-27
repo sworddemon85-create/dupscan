@@ -37,6 +37,8 @@ node cli.js D:\Download --json > dup-report.json
 node -e "require('./lib/scan').findDuplicates('D:\\\\Download').then(r => console.log(r.wastedBytes))"
 ```
 
+需指定一个已存在的目录。未知选项、参数漏值、无效数值、目录不存在或路径指向普通文件时，命令以退出码 `1` 结束，错误写入 stderr，stdout 不输出报告。`--top` 接受非负整数（`0` 显示全部组）。目录名以短横线开头时，在前面加 `--`，例如 `node cli.js --json -- --photos`。
+
 示例输出：
 
 ```
@@ -54,10 +56,10 @@ node -e "require('./lib/scan').findDuplicates('D:\\\\Download').then(r => consol
 ## 🧪 测试
 
 ```bash
-npm test    # node --test，8 个用例
+npm test    # node --test
 ```
 
-覆盖：递归遍历与忽略规则、哈希正确性、内容分组、minSize 过滤、排序、缺失目录容错。
+覆盖：递归遍历与忽略规则、哈希正确性、内容分组、minSize 过滤、排序、库接口的缺失目录容错，以及通过子进程验证的 CLI 错误处理、过滤参数、JSON 输出和帮助信息。
 
 ## 📁 结构
 
