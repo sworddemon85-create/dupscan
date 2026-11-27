@@ -123,3 +123,17 @@ test("onWarn 在目录缺失时不抛出", async () => {
   assert.strictEqual(result.groups.length, 0);
   assert.ok(warnings.length >= 1);
 });
+
+test("findDuplicates 按可回收空间而非总大小排序", async (t) => {
+  const root = await makeTree({
+    "pair1.bin": "P".repeat(100),
+    "pair2.bin": "P".repeat(100),
+    "triple1.bin": "T".repeat(60),
+    "triple2.bin": "T".repeat(60),
+    "triple3.bin": "T".repeat(60),
+  });
+  t.after(() => fsp.rm(root, { recursive: true, force: true }));
+  const result = await findDuplicates(root);
+  assert.deepStrictEqual(result.groups.map(g => g.size * (g.files.length - 1)), [120, 100]);
+  assert.strictEqual(result.wastedBytes, 220);
+});
