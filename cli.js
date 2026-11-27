@@ -73,8 +73,13 @@ async function main() {
   console.log(`重复组数: ${groups.length}${options.top ? `（仅显示前 ${options.top} 组）` : ""}`);
   console.log(`可释放空间: ${formatBytes(result.wastedBytes)}`);
   for (const [i, g] of groups.entries()) {
-    console.log(`\n#${i + 1} ${formatBytes(g.size)} × ${g.files.length} = 可释放 ${formatBytes(g.size * (g.files.length - 1))}`);
-    for (const f of g.files) console.log(`    ${f}`);
+    console.log(`\n#${i + 1} ${formatBytes(g.size)} × ${g.copies.length} = 可释放 ${formatBytes(g.reclaimableBytes)}`);
+    for (const copy of g.copies) {
+      if (copy.files.length > 1 || copy.externalLinks > 0) {
+        console.log(`    同一副本：范围内 ${copy.files.length} 个路径，范围外 ${copy.externalLinks} 个硬链接`);
+      }
+      for (const f of copy.files) console.log(`    ${f}`);
+    }
   }
   if (!groups.length) console.log("\n没有发现重复文件 ✅");
   process.stderr.write(`耗时 ${((Date.now() - started) / 1000).toFixed(1)}s\n`);
