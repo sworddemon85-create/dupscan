@@ -36,6 +36,8 @@ node cli.js D:\Download --json > dup-report.json
 node -e "require('./lib/scan').findDuplicates('D:\\\\Download').then(r => console.log(r.wastedBytes))"
 ```
 
+Supply exactly one existing directory. Unknown options, missing option values, invalid numbers, and missing or non-directory roots exit with code `1`, write an error to stderr, and emit no report to stdout. `--top` accepts non-negative integers (`0` shows all groups). Use `--` before a directory name beginning with a dash, for example `node cli.js --json -- --photos`.
+
 Example output:
 
 ```
@@ -52,10 +54,10 @@ Reclaimable: 1.4 GB
 ## 🧪 Tests
 
 ```bash
-npm test    # node --test — 8 unit tests
+npm test    # node --test
 ```
 
-Covers: recursive walk and ignore rules, hash correctness, content grouping, minSize filtering, sort order, missing-directory resilience.
+Covers: recursive walk and ignore rules, hash correctness, content grouping, minSize filtering, sort order, library missing-directory resilience, and subprocess tests for CLI errors, filters, JSON output, and help.
 
 ## 📁 Structure
 
