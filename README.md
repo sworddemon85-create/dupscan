@@ -73,6 +73,7 @@ dupscan/
 
 - **Report-only** — it never deletes anything; cleanup is left to you or your scripts (pairs well with `--json`)
 - Symlinks are always skipped to avoid cyclic walks
+- Hard-link paths sharing a file identity count as one independent copy and are hashed once. JSON groups retain all `files`, add `copies` (each with `files` and an `externalLinks` count), and expose `reclaimableBytes`. Removing a copy requires removing all its links; links outside the scanned set, including ignored directories, prevent that copy from being reclaimed. The estimate retains at least one independent copy overall and is based on logical file sizes at scan time, not allocated disk blocks or a guarantee for files changing during the scan.
 - On Windows, run `chcp 65001` first for correct non-ASCII output in legacy consoles
 
 ## 📄 License
